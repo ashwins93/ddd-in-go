@@ -1,22 +1,19 @@
-version: '3.8'
-name: 'wild-workouts'
+version: "3.8"
+name: "wild-workouts"
 services:
     web:
         build:
             context: docker/web
             dockerfile: Dockerfile
         working_dir: /web
-        volumes:
-            - ./web:/web
-            - /web/node_modules/
         ports:
             - "127.0.0.1:8080:8080"
 
     trainer-http:
         build:
-            context: docker/app
+            context: .
+            dockerfile: docker/app/Dockerfile
         volumes:
-            - ./internal:/internal
             - ./.go/pkg:/go/pkg
             - ./.go-cache:/go-cache
         #      - ./service-account-file.json:$SERVICE_ACCOUNT_FILE
@@ -33,9 +30,9 @@ services:
 
     trainer-grpc:
         build:
-            context: docker/app
+            context: .
+            dockerfile: docker/app/Dockerfile
         volumes:
-            - ./internal:/internal
             - ./.go/pkg:/go/pkg
             - ./.go-cache:/go-cache
         #      - ./service-account-file.json:$SERVICE_ACCOUNT_FILE
@@ -52,9 +49,9 @@ services:
 
     trainings-http:
         build:
-            context: docker/app
+            context: .
+            dockerfile: docker/app/Dockerfile
         volumes:
-            - ./internal:/internal
             - ./.go/pkg:/go/pkg
             - ./.go-cache:/go-cache
         #      - ./service-account-file.json:$SERVICE_ACCOUNT_FILE
@@ -70,9 +67,9 @@ services:
 
     users-http:
         build:
-            context: docker/app
+            context: .
+            dockerfile: docker/app/Dockerfile
         volumes:
-            - ./internal:/internal
             - ./.go/pkg:/go/pkg
             - ./.go-cache:/go-cache
         #      - ./service-account-file.json:$SERVICE_ACCOUNT_FILE
@@ -89,9 +86,9 @@ services:
 
     users-grpc:
         build:
-            context: docker/app
+            context: .
+            dockerfile: docker/app/Dockerfile
         volumes:
-            - ./internal:/internal
             - ./.go/pkg:/go/pkg
             - ./.go-cache:/go-cache
         #      - ./service-account-file.json:$SERVICE_ACCOUNT_FILE
@@ -113,16 +110,6 @@ services:
             - .env
         ports:
             - "127.0.0.1:8787:8787"
-            - "127.0.0.1:4000:4000"
-        restart: unless-stopped
-
-    firestore-component-tests:
-        build:
-            context: docker/firestore-emulator
-        env_file:
-            - .env
-        ports:
-            - "127.0.0.1:8788:8787"
         restart: unless-stopped
 
     mysql:
