@@ -1,6 +1,7 @@
 package client
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"os"
@@ -10,6 +11,7 @@ import (
 	"github.com/ThreeDotsLabs/wild-workouts-go-ddd-example/internal/common/genproto/trainer"
 	"github.com/ThreeDotsLabs/wild-workouts-go-ddd-example/internal/common/genproto/users"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
@@ -34,7 +36,7 @@ func NewTrainerClient() (client trainer.TrainerServiceClient, close func() error
 }
 
 func WaitForTrainerService(timeout time.Duration) bool {
-	return waitForPort(os.Getenv("TRAINER_GRPC_ADDR"), timeout)
+	return grpcHealthCheck(os.Getenv("TRAINER_GRPC_ADDR"), timeout)
 }
 
 func NewUsersClient() (client users.UsersServiceClient, close func() error, err error) {
@@ -57,7 +59,7 @@ func NewUsersClient() (client users.UsersServiceClient, close func() error, err 
 }
 
 func WaitForUsersService(timeout time.Duration) bool {
-	return waitForPort(os.Getenv("USERS_GRPC_ADDR"), timeout)
+	return grpcHealthCheck(os.Getenv("USERS_GRPC_ADDR"), timeout)
 }
 
 func grpcDialOpts(grpcAddr string) ([]grpc.DialOption, error) {
@@ -78,4 +80,28 @@ func grpcDialOpts(grpcAddr string) ([]grpc.DialOption, error) {
 		grpc.WithTransportCredentials(creds),
 		grpc.WithPerRPCCredentials(newMetadataServerToken(grpcAddr)),
 	}, nil
+}
+
+func grpcHealthCheck(grpcAddr string, timeout time.Duration) bool {
+	logrus.Debugf("checking if service %q is ready", grpcAddr)
+	opts, err := grpcDialOpts(grpcAddr)
+	if err != nil {
+		logrus.Errorf("error: failed to create grpc dial options: %+v", err)
+		return false
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	conn, err := grpc.DialContext(ctx, grpcAddr, opts...)
+	if err != nil {
+		if err == context.DeadlineExceeded {
+			logrus.Errorf("timeout: failed to connect service %q within %v", grpcAddr, timeout)
+		} else {
+			logrus.Errorf("error: failed to connect service at %q: %+v", grpcAddr, err)
+		}
+		return false
+	}
+	defer conn.Close()
+	logrus.Infof("service %q is ready", grpcAddr)
+
+	return true
 }
