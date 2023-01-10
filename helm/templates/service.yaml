@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "vars.fullname" . }}
+  labels:
+    {{- include "vars.labels" . | nindent 4 }}
+  namespace: wild-workouts
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: {{ .Values.containerPort }}
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "vars.selectorLabels" . | nindent 4 }}

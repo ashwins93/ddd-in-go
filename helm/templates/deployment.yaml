@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "vars.fullname" . }}
+  labels:
+    {{- include "vars.labels" . | nindent 4 }}
+  namespace: wild-workouts
+spec:
+  selector:
+    matchLabels:
+      {{- include "vars.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "vars.selectorLabels" . | nindent 8 }}
+    spec:
+      initContainers:
+        - name: firestore-check
+          image: alpine:3.12
+          command:
+            [
+              "sh",
+              "-c",
+              "until nc -z firestore-emulator 8787; do echo waiting for firestore; sleep 2; done;",
+            ]
+      containers:
+        - name: {{ include "vars.name" . }}
+          image: {{ printf "%s:%s" .Values.image.repository .Values.image.tag }} 
+          workingDir: {{ .Values.workingDir }}
+          ports:
+            - containerPort: {{ .Values.containerPort }}
+          env:
+            - name: SERVER_TO_RUN
+              value: {{ .Values.serverToRun }}
+            - name: GOCACHE
+              value: /go-cache
+          envFrom:
+            - configMapRef:
+                name: wild-workouts-config
+          volumeMounts:
+            - name: go-cache
+              mountPath: /go-cache
+            - name: go-pkg
+              mountPath: /go/pkg
+      volumes:
+        - name: go-cache
+          hostPath:
+            path: /Users/ashwin/workspace/go/ddd-in-go/.go-cache
+            type: Directory
+        - name: go-pkg
+          hostPath:
+            path: /Users/ashwin/workspace/go/ddd-in-go/.go/pkg
+            type: Directory

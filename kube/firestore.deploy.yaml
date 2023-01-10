@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: firestore-emulator
+  namespace: wild-workouts
+  labels:
+    app: firestore-emulator
+spec:
+  selector:
+    matchLabels:
+      app: firestore-emulator
+  template:
+    metadata:
+      name: firestore-emulator
+      labels:
+        app: firestore-emulator
+    spec:
+      containers:
+        - name: firestore-emulator
+          image: firestore-emulator:v0.1
+          ports:
+            - containerPort: 8787
+            - containerPort: 4000
+          envFrom:
+            - configMapRef:
+                name: wild-workouts-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: firestore-emulator
+  namespace: wild-workouts
+spec:
+  selector:
+    app: firestore-emulator
+  ports:
+    - name: firestore-emulator
+      port: 8787
+      targetPort: 8787

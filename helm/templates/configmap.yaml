@@ -1,0 +1,24 @@
+{{- if (empty (lookup "v1" "ConfigMap" "wild-workouts" "wild-workouts-config") ) -}}
+apiVersion: v1
+data:
+  CORS_ALLOWED_ORIGINS: http://localhost:8080
+  FIRESTORE_EMULATOR_HOST: firestore-emulator:8787
+  FIRESTORE_PROJECT_ID: threedotslabs-cloudnative
+  GCP_PROJECT: threedotslabs-cloudnative
+  GCP_PROJECT_ID: threedotslabs-cloudnative
+  GRPC_NO_TLS: "1"
+  LOCAL_ENV: "true"
+  MOCK_AUTH: "true"
+  MYSQL_ADDR: localhost
+  MYSQL_DATABASE: db
+  MYSQL_PASSWORD: password
+  MYSQL_RANDOM_ROOT_PASSWORD: "true"
+  MYSQL_USER: user
+  PORT: "{{ .Values.containerPort }}"
+  TRAINER_GRPC_ADDR: "trainer-grpc:{{ .Values.service.port }}"
+  USERS_GRPC_ADDR: "users-grpc:{{ .Values.service.port }}"
+kind: ConfigMap
+metadata:
+  name: wild-workouts-config
+  namespace: wild-workouts
+{{- end -}}

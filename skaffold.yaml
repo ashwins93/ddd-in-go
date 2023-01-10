@@ -1,0 +1,144 @@
+apiVersion: skaffold/v4beta1
+kind: Config
+metadata:
+  name: wild-workouts
+build:
+  local:
+    push: false
+  artifacts:
+    - image: trainer-grpc
+      context: .
+      docker:
+        dockerfile: docker/app/Dockerfile
+    - image: trainer-http
+      context: .
+      docker:
+        dockerfile: docker/app/Dockerfile
+    - image: users-grpc
+      context: .
+      docker:
+        dockerfile: docker/app/Dockerfile
+    - image: users-http
+      context: .
+      docker:
+        dockerfile: docker/app/Dockerfile
+    - image: trainings-http
+      context: .
+      docker:
+        dockerfile: docker/app/Dockerfile
+
+deploy:
+  helm:
+    releases:
+      - name: trainer-grpc
+        chartPath: helm
+        valuesFiles:
+          - helm/values.yaml
+        setValues:
+          nameOverride: trainer-grpc
+          serverToRun: grpc
+          service.type: ClusterIP
+          workingDir: /internal/trainer
+        setValueTemplates:
+          image.repository: "{{.IMAGE_REPO_trainer_grpc}}"
+          image.tag: "{{.IMAGE_TAG_trainer_grpc}}"
+      - name: trainer-http
+        chartPath: helm
+        valuesFiles:
+          - helm/values.yaml
+        setValues:
+          nameOverride: trainer-http
+          serverToRun: http
+          service.type: ClusterIP
+          workingDir: /internal/trainer
+        setValueTemplates:
+          image.repository: "{{.IMAGE_REPO_trainer_http}}"
+          image.tag: "{{.IMAGE_TAG_trainer_http}}"
+      - name: users-grpc
+        chartPath: helm
+        valuesFiles:
+          - helm/values.yaml
+        setValues:
+          nameOverride: users-grpc
+          serverToRun: grpc
+          service.type: ClusterIP
+          workingDir: /internal/users
+        setValueTemplates:
+          image.repository: "{{.IMAGE_REPO_users_grpc}}"
+          image.tag: "{{.IMAGE_TAG_users_grpc}}"
+      - name: users-http
+        chartPath: helm
+        valuesFiles:
+          - helm/values.yaml
+        setValues:
+          nameOverride: users-http
+          serverToRun: http
+          service.type: ClusterIP
+          workingDir: /internal/users
+        setValueTemplates:
+          image.repository: "{{.IMAGE_REPO_users_http}}"
+          image.tag: "{{.IMAGE_TAG_users_http}}"
+      - name: trainings-http
+        chartPath: helm
+        valuesFiles:
+          - helm/values.yaml
+        setValues:
+          nameOverride: trainings-http
+          serverToRun: http
+          service.type: ClusterIP
+          workingDir: /internal/trainings
+        setValueTemplates:
+          image.repository: "{{.IMAGE_REPO_trainings_http}}"
+          image.tag: "{{.IMAGE_TAG_trainings_http}}"
+
+profiles:
+  - name: dev
+    activation:
+      - command: dev
+    build:
+      artifacts:
+        - image: trainer-http
+          context: .
+          docker:
+            dockerfile: ./docker/app/Dockerfile
+          sync:
+            infer:
+              - "/internal/trainer/**/*.go"
+              - "/internal/trainer/go.mod"
+              - "/interna/trainer/go.sum"
+        - image: trainer-grpc
+          context: .
+          docker:
+            dockerfile: docker/app/Dockerfile
+          sync:
+            infer:
+              - "/internal/trainer/**/*.go"
+              - "/internal/trainer/go.mod"
+              - "/interna/trainer/go.sum"
+        - image: users-http
+          context: .
+          docker:
+            dockerfile: docker/app/Dockerfile
+          sync:
+            infer:
+              - "/internal/users/**/*.go"
+              - "/internal/users/go.mod"
+              - "/interna/users/go.sum"
+        - image: users-grpc
+          context: .
+          docker:
+            dockerfile: docker/app/Dockerfile
+          sync:
+            infer:
+              - "/internal/users/**/*.go"
+              - "/internal/users/go.mod"
+              - "/interna/users/go.sum"
+        - image: trainings-http
+          context: .
+          docker:
+            dockerfile: docker/app/Dockerfile
+          sync:
+            infer:
+              - "/internal/trainings/**/*.go"
+              - "/internal/trainings/go.mod"
+              - "/interna/trainings/go.sum"

@@ -1,0 +1,15 @@
+nameOverride: trainer-http
+
+image:
+  repository: trainer-http
+  tag: latest
+
+containerPort: 3000
+
+serverToRun: http
+
+service:
+  type: ClusterIP
+  port: 3000
+
+workingDir: /internal/trainer
